@@ -18,12 +18,10 @@ const Pengaturan = () => {
   useEffect(() => {
     // Apply theme on mount and when theme changes
     const root = document.documentElement;
-    root.classList.remove("dark", "theme-purple-orange");
+    root.classList.remove("dark", "theme-purple-orange", "theme-black-orange");
     
-    if (settings.theme === "dark") {
-      root.classList.add("dark");
-    } else if (settings.theme === "purple-orange") {
-      root.classList.add("theme-purple-orange");
+    if (settings.theme === "black-orange") {
+      root.classList.add("theme-black-orange");
     }
     
     localStorage.setItem("app-theme", settings.theme);
@@ -35,8 +33,7 @@ const Pengaturan = () => {
 
   const themes = [
     { value: "blue-white", label: "Biru & Putih (Default)", color: "bg-[#0044cc]" },
-    { value: "purple-orange", label: "Ungu & Oranye", color: "bg-purple-600" },
-    { value: "dark", label: "Mode Gelap", color: "bg-gray-900" },
+    { value: "black-orange", label: "Hitam & Oranye", color: "bg-[#1a1a1a]" },
   ];
 
   return (
