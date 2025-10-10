@@ -106,36 +106,36 @@ All colors MUST be HSL.
     --primary: 280 70% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 280 40% 96%;
-    --secondary-foreground: 280 70% 50%;
+    --secondary: 30 95% 60%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 280 40% 96%;
+    --muted: 30 100% 97%;
     --muted-foreground: 280 16% 47%;
 
-    --accent: 280 60% 95%;
-    --accent-foreground: 280 70% 50%;
+    --accent: 30 100% 95%;
+    --accent-foreground: 30 95% 45%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 280 32% 91%;
     --input: 280 32% 91%;
-    --ring: 280 70% 50%;
+    --ring: 30 95% 60%;
 
     --sidebar-background: 280 70% 50%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 280 70% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 100%;
-    --sidebar-accent-foreground: 280 70% 50%;
+    --sidebar-accent: 30 95% 60%;
+    --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 280 70% 45%;
-    --sidebar-ring: 0 0% 100%;
+    --sidebar-ring: 30 95% 60%;
 
     --chart-1: 280 70% 55%;
-    --chart-2: 30 90% 55%;
-    --chart-3: 160 60% 45%;
-    --chart-4: 340 75% 55%;
-    --chart-5: 200 65% 60%;
+    --chart-2: 30 95% 60%;
+    --chart-3: 30 100% 50%;
+    --chart-4: 280 90% 65%;
+    --chart-5: 340 75% 55%;
   }
 }
 
