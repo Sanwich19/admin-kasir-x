@@ -15,7 +15,8 @@ interface Employee {
 
 const Karyawan = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [employees] = useState<Employee[]>([
+  const [showForm, setShowForm] = useState(false);
+  const [employees, setEmployees] = useState<Employee[]>([
     { id: 1, name: "Andi Setiawan", position: "Kasir", email: "andi@email.com", phone: "0812-3456-7890", status: "active" },
     { id: 2, name: "Siti Nurhaliza", position: "Kasir", email: "siti@email.com", phone: "0813-4567-8901", status: "active" },
     { id: 3, name: "Budi Santoso", position: "Chef", email: "budi@email.com", phone: "0814-5678-9012", status: "active" },
@@ -28,8 +29,27 @@ const Karyawan = () => {
     emp.position.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const [formData, setFormData] = useState({
+    name: "",
+    position: "",
+    email: "",
+    phone: "",
+  });
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newEmployee: Employee = {
+      id: employees.length + 1,
+      ...formData,
+      status: "active",
+    };
+    setEmployees([...employees, newEmployee]);
+    setFormData({ name: "", position: "", email: "", phone: "" });
+    setShowForm(false);
   };
 
   return (
@@ -50,11 +70,59 @@ const Karyawan = () => {
               className="pl-10"
             />
           </div>
-          <Button className="button-primary">
+          <Button className="button-primary" onClick={() => setShowForm(!showForm)}>
             <Plus className="h-4 w-4 mr-2" />
             Tambah Karyawan
           </Button>
         </div>
+
+        {showForm && (
+          <form onSubmit={handleSubmit} className="mb-6 p-4 bg-accent rounded-lg border border-border">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium mb-1">Nama Lengkap</label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="position" className="block text-sm font-medium mb-1">Posisi</label>
+                <Input
+                  id="position"
+                  value={formData.position}
+                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium mb-1">No. Telepon</label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button type="submit" className="button-primary">Simpan</Button>
+              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Batal</Button>
+            </div>
+          </form>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredEmployees.map((employee) => (
