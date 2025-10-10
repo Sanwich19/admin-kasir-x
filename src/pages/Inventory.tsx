@@ -14,6 +14,7 @@ interface Product {
 
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showForm, setShowForm] = useState(false);
   const [products, setProducts] = useState<Product[]>([
     { id: 1, name: "Kopi Espresso", category: "Minuman", stock: 50, price: 15000 },
     { id: 2, name: "Cappuccino", category: "Minuman", stock: 45, price: 18000 },
@@ -31,6 +32,25 @@ const Inventory = () => {
   const deleteProduct = (id: number) => {
     setProducts(products.filter(p => p.id !== id));
     toast.success("Produk berhasil dihapus");
+  };
+
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    stock: 0,
+    price: 0,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newProduct: Product = {
+      id: products.length + 1,
+      ...formData,
+    };
+    setProducts([...products, newProduct]);
+    setFormData({ name: "", category: "", stock: 0, price: 0 });
+    setShowForm(false);
+    toast.success("Produk berhasil ditambahkan");
   };
 
   return (
@@ -51,11 +71,60 @@ const Inventory = () => {
               className="pl-10"
             />
           </div>
-          <Button className="button-primary">
+          <Button className="button-primary" onClick={() => setShowForm(!showForm)}>
             <Plus className="h-4 w-4 mr-2" />
             Tambah Produk
           </Button>
         </div>
+
+        {showForm && (
+          <form onSubmit={handleSubmit} className="mb-6 p-4 bg-accent rounded-lg border border-border">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium mb-1">Nama Produk</label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium mb-1">Kategori</label>
+                <Input
+                  id="category"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="stock" className="block text-sm font-medium mb-1">Stok</label>
+                <Input
+                  id="stock"
+                  type="number"
+                  value={formData.stock}
+                  onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="price" className="block text-sm font-medium mb-1">Harga</label>
+                <Input
+                  id="price"
+                  type="number"
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button type="submit" className="button-primary">Simpan</Button>
+              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Batal</Button>
+            </div>
+          </form>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full">
