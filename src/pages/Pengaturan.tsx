@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save, Store, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,23 @@ const Pengaturan = () => {
     address: "Jl. Raya No. 123, Jakarta",
     phone: "021-12345678",
     email: "admin@coffeeshop.com",
-    theme: "blue-white",
+    theme: localStorage.getItem("app-theme") || "blue-white",
     taxRate: "10",
   });
+
+  useEffect(() => {
+    // Apply theme on mount and when theme changes
+    const root = document.documentElement;
+    root.classList.remove("dark", "theme-purple-orange");
+    
+    if (settings.theme === "dark") {
+      root.classList.add("dark");
+    } else if (settings.theme === "purple-orange") {
+      root.classList.add("theme-purple-orange");
+    }
+    
+    localStorage.setItem("app-theme", settings.theme);
+  }, [settings.theme]);
 
   const handleSave = () => {
     toast.success("Pengaturan berhasil disimpan!");

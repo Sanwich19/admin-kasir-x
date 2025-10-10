@@ -92,6 +92,51 @@ All colors MUST be HSL.
     --sidebar-border: 217 20% 15%;
     --sidebar-ring: 217 100% 50%;
   }
+
+  .theme-purple-orange {
+    --background: 0 0% 100%;
+    --foreground: 280 40% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 280 40% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 280 40% 20%;
+
+    --primary: 280 70% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 280 40% 96%;
+    --secondary-foreground: 280 70% 50%;
+
+    --muted: 280 40% 96%;
+    --muted-foreground: 280 16% 47%;
+
+    --accent: 280 60% 95%;
+    --accent-foreground: 280 70% 50%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 280 32% 91%;
+    --input: 280 32% 91%;
+    --ring: 280 70% 50%;
+
+    --sidebar-background: 280 70% 50%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 280 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 280 70% 50%;
+    --sidebar-border: 280 70% 45%;
+    --sidebar-ring: 0 0% 100%;
+
+    --chart-1: 280 70% 55%;
+    --chart-2: 30 90% 55%;
+    --chart-3: 160 60% 45%;
+    --chart-4: 340 75% 55%;
+    --chart-5: 200 65% 60%;
+  }
 }
 
 @layer base {
