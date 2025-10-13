@@ -15,6 +15,7 @@ interface Product {
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [products, setProducts] = useState<Product[]>([
     { id: 1, name: "Kopi Espresso", category: "Minuman", stock: 50, price: 15000 },
     { id: 2, name: "Cappuccino", category: "Minuman", stock: 45, price: 18000 },
@@ -43,14 +44,33 @@ const Inventory = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newProduct: Product = {
-      id: products.length + 1,
-      ...formData,
-    };
-    setProducts([...products, newProduct]);
+    if (editingId) {
+      setProducts(products.map(p => 
+        p.id === editingId ? { ...p, ...formData } : p
+      ));
+      toast.success("Produk berhasil diperbarui");
+    } else {
+      const newProduct: Product = {
+        id: products.length + 1,
+        ...formData,
+      };
+      setProducts([...products, newProduct]);
+      toast.success("Produk berhasil ditambahkan");
+    }
     setFormData({ name: "", category: "", stock: 0, price: 0 });
+    setEditingId(null);
     setShowForm(false);
-    toast.success("Produk berhasil ditambahkan");
+  };
+
+  const editProduct = (product: Product) => {
+    setFormData({
+      name: product.name,
+      category: product.category,
+      stock: product.stock,
+      price: product.price,
+    });
+    setEditingId(product.id);
+    setShowForm(true);
   };
 
   return (
@@ -71,7 +91,11 @@ const Inventory = () => {
               className="pl-10"
             />
           </div>
-          <Button className="button-primary" onClick={() => setShowForm(!showForm)}>
+          <Button className="button-primary" onClick={() => {
+            setShowForm(!showForm);
+            setEditingId(null);
+            setFormData({ name: "", category: "", stock: 0, price: 0 });
+          }}>
             <Plus className="h-4 w-4 mr-2" />
             Tambah Produk
           </Button>
@@ -120,8 +144,14 @@ const Inventory = () => {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button type="submit" className="button-primary">Simpan</Button>
-              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Batal</Button>
+              <Button type="submit" className="button-primary">
+                {editingId ? "Update" : "Simpan"}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => {
+                setShowForm(false);
+                setEditingId(null);
+                setFormData({ name: "", category: "", stock: 0, price: 0 });
+              }}>Batal</Button>
             </div>
           </form>
         )}
@@ -152,7 +182,7 @@ const Inventory = () => {
                   <td className="p-3 font-semibold text-primary">Rp {product.price.toLocaleString()}</td>
                   <td className="p-3">
                     <div className="flex justify-center gap-2">
-                      <Button size="icon" variant="outline">
+                      <Button size="icon" variant="outline" onClick={() => editProduct(product)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button size="icon" variant="destructive" onClick={() => deleteProduct(product.id)}>
