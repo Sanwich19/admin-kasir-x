@@ -1,11 +1,21 @@
 import { useState } from "react";
-import { Plus, Search, Mail, Phone } from "lucide-react";
+import { Plus, Search, Mail, Phone, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Employee {
   id: number;
@@ -20,6 +30,8 @@ interface Employee {
 const Karyawan = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([
     { id: 1, name: "Andi Setiawan", position: "Kasir", email: "andi@email.com", phone: "0812-3456-7890", status: "active" },
     { id: 2, name: "Siti Nurhaliza", position: "Kasir", email: "siti@email.com", phone: "0813-4567-8901", status: "active" },
@@ -58,15 +70,43 @@ const Karyawan = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newEmployee: Employee = {
-      id: employees.length + 1,
-      ...formData,
-      status: "active",
-    };
-    setEmployees([...employees, newEmployee]);
+    if (editingId) {
+      setEmployees(employees.map(emp =>
+        emp.id === editingId ? { ...emp, ...formData } : emp
+      ));
+      toast.success("Data karyawan berhasil diperbarui");
+    } else {
+      const newEmployee: Employee = {
+        id: employees.length + 1,
+        ...formData,
+        status: "active",
+      };
+      setEmployees([...employees, newEmployee]);
+      toast.success("Karyawan berhasil ditambahkan");
+    }
     setFormData({ name: "", position: "", email: "", phone: "", photo: "" });
+    setEditingId(null);
     setShowForm(false);
-    toast.success("Karyawan berhasil ditambahkan");
+  };
+
+  const editEmployee = (employee: Employee) => {
+    setFormData({
+      name: employee.name,
+      position: employee.position,
+      email: employee.email,
+      phone: employee.phone,
+      photo: employee.photo || "",
+    });
+    setEditingId(employee.id);
+    setShowForm(true);
+  };
+
+  const deleteEmployee = () => {
+    if (deleteId) {
+      setEmployees(employees.filter(emp => emp.id !== deleteId));
+      toast.success("Karyawan berhasil dihapus");
+      setDeleteId(null);
+    }
   };
 
   const toggleStatus = (id: number) => {
@@ -95,7 +135,11 @@ const Karyawan = () => {
               className="pl-10"
             />
           </div>
-          <Button className="button-primary" onClick={() => setShowForm(!showForm)}>
+          <Button className="button-primary" onClick={() => {
+            setShowForm(!showForm);
+            setEditingId(null);
+            setFormData({ name: "", position: "", email: "", phone: "", photo: "" });
+          }}>
             <Plus className="h-4 w-4 mr-2" />
             Tambah Karyawan
           </Button>
@@ -158,8 +202,14 @@ const Karyawan = () => {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button type="submit" className="button-primary">Simpan</Button>
-              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Batal</Button>
+              <Button type="submit" className="button-primary">
+                {editingId ? "Update" : "Simpan"}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => {
+                setShowForm(false);
+                setEditingId(null);
+                setFormData({ name: "", position: "", email: "", phone: "", photo: "" });
+              }}>Batal</Button>
             </div>
           </form>
         )}
@@ -192,15 +242,37 @@ const Karyawan = () => {
                       <span>{employee.phone}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 pt-2 border-t border-border">
-                    <Switch 
-                      id={`status-${employee.id}`}
-                      checked={employee.status === "active"}
-                      onCheckedChange={() => toggleStatus(employee.id)}
-                    />
-                    <Label htmlFor={`status-${employee.id}`} className="cursor-pointer">
-                      {employee.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
-                    </Label>
+                  <div className="space-y-2 pt-2 border-t border-border">
+                    <div className="flex items-center gap-2">
+                      <Switch 
+                        id={`status-${employee.id}`}
+                        checked={employee.status === "active"}
+                        onCheckedChange={() => toggleStatus(employee.id)}
+                      />
+                      <Label htmlFor={`status-${employee.id}`} className="cursor-pointer">
+                        {employee.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+                      </Label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => editEmployee(employee)}
+                        className="flex-1"
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive"
+                        onClick={() => setDeleteId(employee.id)}
+                        className="flex-1"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Hapus
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -208,6 +280,23 @@ const Karyawan = () => {
           ))}
         </div>
       </div>
+
+      <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Karyawan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus karyawan ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteEmployee} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
