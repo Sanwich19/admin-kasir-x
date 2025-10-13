@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Plus, Search, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface Employee {
   id: number;
@@ -11,6 +14,7 @@ interface Employee {
   email: string;
   phone: string;
   status: "active" | "inactive";
+  photo?: string;
 }
 
 const Karyawan = () => {
@@ -34,10 +38,22 @@ const Karyawan = () => {
     position: "",
     email: "",
     phone: "",
+    photo: "",
   });
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, photo: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -48,8 +64,17 @@ const Karyawan = () => {
       status: "active",
     };
     setEmployees([...employees, newEmployee]);
-    setFormData({ name: "", position: "", email: "", phone: "" });
+    setFormData({ name: "", position: "", email: "", phone: "", photo: "" });
     setShowForm(false);
+    toast.success("Karyawan berhasil ditambahkan");
+  };
+
+  const toggleStatus = (id: number) => {
+    setEmployees(employees.map(emp => 
+      emp.id === id ? { ...emp, status: emp.status === "active" ? "inactive" : "active" } : emp
+    ));
+    const employee = employees.find(emp => emp.id === id);
+    toast.success(`Status ${employee?.name} berhasil diubah`);
   };
 
   return (
@@ -80,7 +105,7 @@ const Karyawan = () => {
           <form onSubmit={handleSubmit} className="mb-6 p-4 bg-accent rounded-lg border border-border">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium mb-1">Nama Lengkap</label>
+                <Label htmlFor="name">Nama Lengkap</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -89,7 +114,7 @@ const Karyawan = () => {
                 />
               </div>
               <div>
-                <label htmlFor="position" className="block text-sm font-medium mb-1">Posisi</label>
+                <Label htmlFor="position">Posisi</Label>
                 <Input
                   id="position"
                   value={formData.position}
@@ -98,7 +123,7 @@ const Karyawan = () => {
                 />
               </div>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -108,13 +133,28 @@ const Karyawan = () => {
                 />
               </div>
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium mb-1">No. Telepon</label>
+                <Label htmlFor="phone">No. Telepon</Label>
                 <Input
                   id="phone"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required
                 />
+              </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="photo">Foto Karyawan</Label>
+                <Input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="cursor-pointer"
+                />
+                {formData.photo && (
+                  <div className="mt-2">
+                    <img src={formData.photo} alt="Preview" className="h-20 w-20 rounded-full object-cover" />
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex gap-2 mt-4">
@@ -129,6 +169,7 @@ const Karyawan = () => {
             <div key={employee.id} className="p-4 bg-accent rounded-lg border border-border hover:shadow-md transition-shadow">
               <div className="flex items-start gap-3">
                 <Avatar className="h-12 w-12 bg-primary text-primary-foreground">
+                  {employee.photo && <AvatarImage src={employee.photo} alt={employee.name} />}
                   <AvatarFallback>{getInitials(employee.name)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
@@ -141,7 +182,7 @@ const Karyawan = () => {
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground mb-3">{employee.position}</p>
-                  <div className="space-y-1">
+                  <div className="space-y-1 mb-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Mail className="h-3 w-3" />
                       <span>{employee.email}</span>
@@ -150,6 +191,16 @@ const Karyawan = () => {
                       <Phone className="h-3 w-3" />
                       <span>{employee.phone}</span>
                     </div>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2 border-t border-border">
+                    <Switch 
+                      id={`status-${employee.id}`}
+                      checked={employee.status === "active"}
+                      onCheckedChange={() => toggleStatus(employee.id)}
+                    />
+                    <Label htmlFor={`status-${employee.id}`} className="cursor-pointer">
+                      {employee.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+                    </Label>
                   </div>
                 </div>
               </div>
