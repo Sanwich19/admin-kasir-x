@@ -20,8 +20,8 @@ const Pengaturan = () => {
     const root = document.documentElement;
     root.classList.remove("dark", "theme-purple-orange", "theme-black-orange");
     
-    if (settings.theme === "black-orange") {
-      root.classList.add("theme-black-orange");
+    if (settings.theme === "dark") {
+      root.classList.add("dark");
     }
     
     localStorage.setItem("app-theme", settings.theme);
@@ -33,7 +33,7 @@ const Pengaturan = () => {
 
   const themes = [
     { value: "blue-white", label: "Biru & Putih (Default)", color: "bg-[#0044cc]" },
-    { value: "black-orange", label: "Hitam & Oranye", color: "bg-[#1a1a1a]" },
+    { value: "dark", label: "Mode Gelap", color: "bg-gray-900" },
   ];
 
   return (

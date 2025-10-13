@@ -1,4 +1,7 @@
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const Laporan = () => {
   const salesData = [
@@ -19,11 +22,44 @@ const Laporan = () => {
     { product: "Croissant", sales: 650000 },
   ];
 
+  const handleDownloadReport = () => {
+    const reportData = {
+      periode: "Minggu Ini",
+      tanggal: new Date().toLocaleDateString("id-ID"),
+      ringkasan: {
+        totalPenjualan: "Rp 24.8 Juta",
+        totalTransaksi: 451,
+        rataRataTransaksi: "Rp 55.000"
+      },
+      penjualanMingguan: salesData,
+      produkTerlaris: productData
+    };
+
+    const dataStr = JSON.stringify(reportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `laporan-${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success("Laporan berhasil diunduh!");
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-foreground mb-2">Laporan</h2>
-        <p className="text-muted-foreground">Analisis penjualan dan performa toko</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-3xl font-bold text-foreground mb-2">Laporan</h2>
+          <p className="text-muted-foreground">Analisis penjualan dan performa toko</p>
+        </div>
+        <Button onClick={handleDownloadReport} className="button-primary">
+          <Download className="h-4 w-4 mr-2" />
+          Unduh Laporan
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
