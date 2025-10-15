@@ -46,10 +46,20 @@ export default function Auth() {
         navigate("/");
       }
     } catch (error: any) {
+      // Map specific errors to generic messages to prevent information leakage
+      let errorMessage = "Unable to process your request. Please try again.";
+      
+      if (isLogin) {
+        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      } else {
+        // For signup, provide generic message without revealing if user exists
+        errorMessage = "Unable to complete registration. Please verify your information and try again.";
+      }
+      
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message,
+        title: "Authentication Error",
+        description: errorMessage,
       });
     } finally {
       setLoading(false);
