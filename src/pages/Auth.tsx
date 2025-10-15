@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { authSchema } from "@/lib/validationSchemas";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -19,12 +20,25 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      // Validate input
+      const validation = authSchema.safeParse({ email, password });
+      if (!validation.success) {
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: validation.error.errors[0].message,
+        });
+        return;
+      }
+
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+          email: validation.data.email,
+          password: validation.data.password,
         });
+
         if (error) throw error;
+
         toast({
           title: "Login berhasil",
           description: "Selamat datang kembali!",
@@ -32,17 +46,17 @@ export default function Auth() {
         navigate("/");
       } else {
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-          },
+          email: validation.data.email,
+          password: validation.data.password,
         });
+
         if (error) throw error;
+
         toast({
           title: "Registrasi berhasil",
-          description: "Akun Anda telah dibuat!",
+          description: "Silakan login dengan akun Anda.",
         });
+        setIsLogin(true);
         navigate("/");
       }
     } catch (error: any) {

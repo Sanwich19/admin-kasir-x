@@ -1,46 +1,90 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { shiftSchema } from "@/lib/validationSchemas";
 
 interface Shift {
-  id: number;
-  employeeName: string;
+  id: string;
+  employee_name: string;
   date: string;
-  startTime: string;
-  endTime: string;
+  start_time: string;
+  end_time: string;
   status: "scheduled" | "ongoing" | "completed";
 }
 
 const ShiftKerja = () => {
-  const [shifts, setShifts] = useState<Shift[]>([
-    { id: 1, employeeName: "Andi Setiawan", date: "2025-01-15", startTime: "08:00", endTime: "16:00", status: "completed" },
-    { id: 2, employeeName: "Siti Nurhaliza", date: "2025-01-15", startTime: "16:00", endTime: "23:00", status: "ongoing" },
-    { id: 3, employeeName: "Budi Santoso", date: "2025-01-16", startTime: "08:00", endTime: "16:00", status: "scheduled" },
-    { id: 4, employeeName: "Dewi Lestari", date: "2025-01-16", startTime: "16:00", endTime: "23:00", status: "scheduled" },
-  ]);
-
+  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    employeeName: "",
+    employee_name: "",
     date: "",
-    startTime: "",
-    endTime: "",
+    start_time: "",
+    end_time: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchShifts();
+  }, []);
+
+  const fetchShifts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('shifts')
+        .select('*')
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true });
+
+      if (error) throw error;
+      setShifts((data as any) || []);
+    } catch (error: any) {
+      toast.error("Gagal memuat data shift");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newShift: Shift = {
-      id: shifts.length + 1,
-      ...formData,
-      status: "scheduled",
-    };
-    setShifts([...shifts, newShift]);
-    setFormData({ employeeName: "", date: "", startTime: "", endTime: "" });
-    setShowForm(false);
-    toast.success("Shift berhasil ditambahkan");
+
+    // Validate input
+    const validation = shiftSchema.safeParse(formData);
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Anda harus login terlebih dahulu");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('shifts')
+        .insert([{
+          employee_name: validation.data.employee_name,
+          date: validation.data.date,
+          start_time: validation.data.start_time,
+          end_time: validation.data.end_time,
+          status: 'scheduled',
+          created_by: user.id,
+        }]);
+
+      if (error) throw error;
+
+      setFormData({ employee_name: "", date: "", start_time: "", end_time: "" });
+      setShowForm(false);
+      toast.success("Shift berhasil ditambahkan");
+      fetchShifts();
+    } catch (error: any) {
+      toast.error(error.message || "Terjadi kesalahan");
+    }
   };
 
   const getStatusColor = (status: Shift["status"]) => {
@@ -58,6 +102,14 @@ const ShiftKerja = () => {
       case "scheduled": return "Terjadwal";
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">Memuat data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -79,11 +131,11 @@ const ShiftKerja = () => {
           <form onSubmit={handleSubmit} className="mb-6 p-4 bg-accent rounded-lg border border-border">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="employeeName">Nama Karyawan</Label>
+                <Label htmlFor="employee_name">Nama Karyawan</Label>
                 <Input
-                  id="employeeName"
-                  value={formData.employeeName}
-                  onChange={(e) => setFormData({ ...formData, employeeName: e.target.value })}
+                  id="employee_name"
+                  value={formData.employee_name}
+                  onChange={(e) => setFormData({ ...formData, employee_name: e.target.value })}
                   required
                 />
               </div>
@@ -98,22 +150,22 @@ const ShiftKerja = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="startTime">Jam Mulai</Label>
+                <Label htmlFor="start_time">Jam Mulai</Label>
                 <Input
-                  id="startTime"
+                  id="start_time"
                   type="time"
-                  value={formData.startTime}
-                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  value={formData.start_time}
+                  onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="endTime">Jam Selesai</Label>
+                <Label htmlFor="end_time">Jam Selesai</Label>
                 <Input
-                  id="endTime"
+                  id="end_time"
                   type="time"
-                  value={formData.endTime}
-                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                  value={formData.end_time}
+                  onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                   required
                 />
               </div>
@@ -139,7 +191,7 @@ const ShiftKerja = () => {
             <tbody>
               {shifts.map((shift) => (
                 <tr key={shift.id} className="border-b border-border hover:bg-accent/50">
-                  <td className="p-3 font-medium text-foreground">{shift.employeeName}</td>
+                  <td className="p-3 font-medium text-foreground">{shift.employee_name}</td>
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -149,13 +201,13 @@ const ShiftKerja = () => {
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{shift.startTime}</span>
+                      <span>{shift.start_time}</span>
                     </div>
                   </td>
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{shift.endTime}</span>
+                      <span>{shift.end_time}</span>
                     </div>
                   </td>
                   <td className="p-3">
@@ -168,6 +220,10 @@ const ShiftKerja = () => {
             </tbody>
           </table>
         </div>
+
+        {shifts.length === 0 && (
+          <p className="text-center text-muted-foreground py-8">Belum ada jadwal shift</p>
+        )}
       </div>
     </div>
   );

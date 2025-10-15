@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { productSchema } from "@/lib/validationSchemas";
 
 interface Product {
-  id: number;
+  id: string;
   name: string;
   category: string;
   stock: number;
@@ -15,25 +18,14 @@ interface Product {
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [products, setProducts] = useState<Product[]>([
-    { id: 1, name: "Kopi Espresso", category: "Minuman", stock: 50, price: 15000 },
-    { id: 2, name: "Cappuccino", category: "Minuman", stock: 45, price: 18000 },
-    { id: 3, name: "Nasi Goreng", category: "Makanan", stock: 30, price: 25000 },
-    { id: 4, name: "Mie Goreng", category: "Makanan", stock: 28, price: 22000 },
-    { id: 5, name: "Croissant", category: "Snack", stock: 60, price: 12000 },
-    { id: 6, name: "Sandwich", category: "Snack", stock: 35, price: 20000 },
-  ]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const deleteProduct = (id: number) => {
-    setProducts(products.filter(p => p.id !== id));
-    toast.success("Produk berhasil dihapus");
-  };
 
   const [formData, setFormData] = useState({
     name: "",
@@ -42,24 +34,81 @@ const Inventory = () => {
     price: 0,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingId) {
-      setProducts(products.map(p => 
-        p.id === editingId ? { ...p, ...formData } : p
-      ));
-      toast.success("Produk berhasil diperbarui");
-    } else {
-      const newProduct: Product = {
-        id: products.length + 1,
-        ...formData,
-      };
-      setProducts([...products, newProduct]);
-      toast.success("Produk berhasil ditambahkan");
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error: any) {
+      toast.error("Gagal memuat data produk");
+    } finally {
+      setLoading(false);
     }
-    setFormData({ name: "", category: "", stock: 0, price: 0 });
-    setEditingId(null);
-    setShowForm(false);
+  };
+
+  const deleteProduct = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success("Produk berhasil dihapus");
+      fetchProducts();
+    } catch (error: any) {
+      toast.error(error.message || "Gagal menghapus produk");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate input
+    const validation = productSchema.safeParse(formData);
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
+      return;
+    }
+
+    try {
+      if (editingId) {
+        const { error } = await supabase
+          .from('products')
+          .update(validation.data)
+          .eq('id', editingId);
+
+        if (error) throw error;
+        toast.success("Produk berhasil diperbarui");
+      } else {
+        const { error } = await supabase
+          .from('products')
+          .insert([{
+            name: validation.data.name,
+            category: validation.data.category,
+            stock: validation.data.stock,
+            price: validation.data.price,
+          }]);
+
+        if (error) throw error;
+        toast.success("Produk berhasil ditambahkan");
+      }
+
+      setFormData({ name: "", category: "", stock: 0, price: 0 });
+      setEditingId(null);
+      setShowForm(false);
+      fetchProducts();
+    } catch (error: any) {
+      toast.error(error.message || "Terjadi kesalahan");
+    }
   };
 
   const editProduct = (product: Product) => {
@@ -72,6 +121,14 @@ const Inventory = () => {
     setEditingId(product.id);
     setShowForm(true);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">Memuat data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -105,7 +162,7 @@ const Inventory = () => {
           <form onSubmit={handleSubmit} className="mb-6 p-4 bg-accent rounded-lg border border-border">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium mb-1">Nama Produk</label>
+                <Label htmlFor="name">Nama Produk</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -114,7 +171,7 @@ const Inventory = () => {
                 />
               </div>
               <div>
-                <label htmlFor="category" className="block text-sm font-medium mb-1">Kategori</label>
+                <Label htmlFor="category">Kategori</Label>
                 <Input
                   id="category"
                   value={formData.category}
@@ -123,22 +180,22 @@ const Inventory = () => {
                 />
               </div>
               <div>
-                <label htmlFor="stock" className="block text-sm font-medium mb-1">Stok</label>
+                <Label htmlFor="stock">Stok</Label>
                 <Input
                   id="stock"
                   type="number"
                   value={formData.stock}
-                  onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
                   required
                 />
               </div>
               <div>
-                <label htmlFor="price" className="block text-sm font-medium mb-1">Harga</label>
+                <Label htmlFor="price">Harga</Label>
                 <Input
                   id="price"
                   type="number"
                   value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                   required
                 />
               </div>
@@ -195,6 +252,12 @@ const Inventory = () => {
             </tbody>
           </table>
         </div>
+
+        {filteredProducts.length === 0 && (
+          <p className="text-center text-muted-foreground py-8">
+            {searchTerm ? "Tidak ada produk yang ditemukan" : "Belum ada produk"}
+          </p>
+        )}
       </div>
     </div>
   );
