@@ -11,6 +11,7 @@ import Karyawan from "./pages/Karyawan";
 import ShiftKerja from "./pages/ShiftKerja";
 import Laporan from "./pages/Laporan";
 import Pengaturan from "./pages/Pengaturan";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<Layout><Dashboard /></Layout>} />
           <Route path="/pos" element={<Layout><POSKasir /></Layout>} />
           <Route path="/inventory" element={<Layout><Inventory /></Layout>} />
