@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, startOfWeek, startOfMonth, endOfDay, endOfWeek, endOfMonth, format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from "date-fns";
-import { id as localeId } from "date-fns/locale";
 
 const Laporan = () => {
   const [period, setPeriod] = useState<"day" | "week" | "month">("day");
@@ -30,14 +29,14 @@ const Laporan = () => {
 
       switch (period) {
         case "day":
-          startDate = startOfWeek(now, { locale: localeId });
-          endDate = endOfWeek(now, { locale: localeId });
+          startDate = startOfWeek(now, { weekStartsOn: 1 });
+          endDate = endOfWeek(now, { weekStartsOn: 1 });
           intervals = eachDayOfInterval({ start: startDate, end: endDate });
           break;
         case "week":
           startDate = startOfMonth(now);
           endDate = endOfMonth(now);
-          intervals = eachWeekOfInterval({ start: startDate, end: endDate }, { locale: localeId });
+          intervals = eachWeekOfInterval({ start: startDate, end: endDate }, { weekStartsOn: 1 });
           break;
         case "month":
           startDate = new Date(now.getFullYear(), 0, 1);
@@ -63,15 +62,15 @@ const Laporan = () => {
         switch (period) {
           case "day":
             intervalEnd = endOfDay(intervalStart);
-            label = format(intervalStart, "EEE", { locale: localeId });
+            label = format(intervalStart, "EEE");
             break;
           case "week":
-            intervalEnd = endOfWeek(intervalStart, { locale: localeId });
-            label = `Minggu ${format(intervalStart, "d MMM", { locale: localeId })}`;
+            intervalEnd = endOfWeek(intervalStart, { weekStartsOn: 1 });
+            label = `Minggu ${format(intervalStart, "d MMM")}`;
             break;
           case "month":
             intervalEnd = endOfMonth(intervalStart);
-            label = format(intervalStart, "MMM", { locale: localeId });
+            label = format(intervalStart, "MMM");
             break;
         }
 
