@@ -17,26 +17,28 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<Layout><Dashboard /></Layout>} />
-          <Route path="/pos" element={<Layout><POSKasir /></Layout>} />
-          <Route path="/inventory" element={<Layout><Inventory /></Layout>} />
-          <Route path="/karyawan" element={<Layout><Karyawan /></Layout>} />
-          <Route path="/shift" element={<Layout><ShiftKerja /></Layout>} />
-          <Route path="/laporan" element={<Layout><Laporan /></Layout>} />
-          <Route path="/pengaturan" element={<Layout><Pengaturan /></Layout>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<Layout><Dashboard /></Layout>} />
+            <Route path="/pos" element={<Layout><POSKasir /></Layout>} />
+            <Route path="/inventory" element={<Layout><Inventory /></Layout>} />
+            <Route path="/karyawan" element={<Layout><Karyawan /></Layout>} />
+            <Route path="/shift" element={<Layout><ShiftKerja /></Layout>} />
+            <Route path="/laporan" element={<Layout><Laporan /></Layout>} />
+            <Route path="/pengaturan" element={<Layout><Pengaturan /></Layout>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
