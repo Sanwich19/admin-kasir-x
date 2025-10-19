@@ -4,16 +4,57 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Pengaturan = () => {
+  const { canManageSettings, loading: roleLoading } = useUserRole();
   const [settings, setSettings] = useState({
-    shopName: "Coffee Shop Admin",
-    address: "Jl. Raya No. 123, Jakarta",
-    phone: "021-12345678",
-    email: "admin@coffeeshop.com",
+    shopName: "",
+    address: "",
+    phone: "",
+    email: "",
     theme: localStorage.getItem("app-theme") || "blue-white",
-    taxRate: "10",
+    taxRate: "",
   });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Load settings from database
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('settings')
+          .select('key, value');
+
+        if (error) throw error;
+
+        if (data) {
+          const settingsMap: Record<string, string> = {};
+          data.forEach(item => {
+            settingsMap[item.key] = item.value;
+          });
+
+          setSettings(prev => ({
+            ...prev,
+            shopName: settingsMap.shopName || "Coffee Shop Admin",
+            address: settingsMap.address || "Jl. Raya No. 123, Jakarta",
+            phone: settingsMap.phone || "021-12345678",
+            email: settingsMap.email || "admin@coffeeshop.com",
+            taxRate: settingsMap.taxRate || "10",
+          }));
+        }
+      } catch (error: any) {
+        console.error('Error loading settings:', error);
+        toast.error("Gagal memuat pengaturan");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, []);
 
   useEffect(() => {
     // Apply theme on mount and when theme changes
@@ -27,8 +68,50 @@ const Pengaturan = () => {
     localStorage.setItem("app-theme", settings.theme);
   }, [settings.theme]);
 
-  const handleSave = () => {
-    toast.success("Pengaturan berhasil disimpan!");
+  const handleSave = async () => {
+    if (!canManageSettings) {
+      toast.error("Anda tidak memiliki izin untuk mengubah pengaturan");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Anda harus login terlebih dahulu");
+        return;
+      }
+
+      // Update all settings
+      const settingsToUpdate = [
+        { key: 'shopName', value: settings.shopName },
+        { key: 'address', value: settings.address },
+        { key: 'phone', value: settings.phone },
+        { key: 'email', value: settings.email },
+        { key: 'taxRate', value: settings.taxRate },
+      ];
+
+      for (const setting of settingsToUpdate) {
+        const { error } = await supabase
+          .from('settings')
+          .upsert({
+            key: setting.key,
+            value: setting.value,
+            updated_by: user.id
+          }, {
+            onConflict: 'key'
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success("Pengaturan berhasil disimpan!");
+    } catch (error: any) {
+      console.error('Error saving settings:', error);
+      toast.error(error.message || "Gagal menyimpan pengaturan");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const themes = [
@@ -36,11 +119,26 @@ const Pengaturan = () => {
     { value: "dark", label: "Mode Gelap", color: "bg-gray-900" },
   ];
 
+  if (loading || roleLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-lg">Memuat pengaturan...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold text-foreground mb-2">Pengaturan</h2>
         <p className="text-muted-foreground">Kelola konfigurasi dan preferensi sistem</p>
+        {!canManageSettings && (
+          <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              ℹ️ Anda hanya dapat melihat pengaturan. Hubungi administrator untuk mengubah pengaturan.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -57,6 +155,7 @@ const Pengaturan = () => {
                 id="shopName"
                 value={settings.shopName}
                 onChange={(e) => setSettings({ ...settings, shopName: e.target.value })}
+                disabled={!canManageSettings}
               />
             </div>
             <div>
@@ -65,6 +164,7 @@ const Pengaturan = () => {
                 id="address"
                 value={settings.address}
                 onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                disabled={!canManageSettings}
               />
             </div>
             <div>
@@ -73,6 +173,7 @@ const Pengaturan = () => {
                 id="phone"
                 value={settings.phone}
                 onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                disabled={!canManageSettings}
               />
             </div>
             <div>
@@ -82,6 +183,7 @@ const Pengaturan = () => {
                 type="email"
                 value={settings.email}
                 onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                disabled={!canManageSettings}
               />
             </div>
           </div>
@@ -123,18 +225,26 @@ const Pengaturan = () => {
                 type="number"
                 value={settings.taxRate}
                 onChange={(e) => setSettings({ ...settings, taxRate: e.target.value })}
+                disabled={!canManageSettings}
               />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <Button className="button-primary" size="lg" onClick={handleSave}>
-          <Save className="h-4 w-4 mr-2" />
-          Simpan Pengaturan
-        </Button>
-      </div>
+      {canManageSettings && (
+        <div className="flex justify-end">
+          <Button 
+            className="button-primary" 
+            size="lg" 
+            onClick={handleSave}
+            disabled={saving}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? "Menyimpan..." : "Simpan Pengaturan"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

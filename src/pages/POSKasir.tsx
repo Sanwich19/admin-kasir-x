@@ -133,30 +133,29 @@ const POSKasir = () => {
         return;
       }
 
-      // Insert transaction
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .insert([{
+      // Use edge function for atomic checkout processing
+      const { data, error } = await supabase.functions.invoke('process-checkout', {
+        body: {
+          cart,
           user_id: user.id,
           customer_name: customerName || null,
           customer_phone: customerPhone || null,
-          total_amount: total,
-          items: cart as any,
-        }]);
-
-      if (transactionError) throw transactionError;
-
-      // Update product stock
-      for (const item of cart) {
-        const product = products.find(p => p.id === item.id);
-        if (product) {
-          const { error: stockError } = await supabase
-            .from('products')
-            .update({ stock: product.stock - item.quantity })
-            .eq('id', item.id);
-
-          if (stockError) throw stockError;
+          total_amount: total
         }
+      });
+
+      if (error) throw error;
+      
+      if (data && data.error) {
+        if (data.error === 'Insufficient stock' && data.details) {
+          const stockErrors = data.details.map((item: any) => 
+            `${item.product_name}: Stok tersedia ${item.available}, diminta ${item.requested}`
+          ).join('\n');
+          toast.error(`Stok tidak mencukupi:\n${stockErrors}`);
+        } else {
+          throw new Error(data.error);
+        }
+        return;
       }
 
       toast.success(`Transaksi berhasil! Total: Rp ${total.toLocaleString()}`);
@@ -165,6 +164,7 @@ const POSKasir = () => {
       setCustomerPhone("");
       fetchProducts(); // Refresh product list
     } catch (error: any) {
+      console.error('Checkout error:', error);
       toast.error(error.message || "Transaksi gagal");
     } finally {
       setProcessing(false);
