@@ -26,12 +26,15 @@ export const productSchema = z.object({
 // Transaction validation
 export const transactionSchema = z.object({
   customer_name: z.string().trim().max(100, { message: "Nama pelanggan terlalu panjang" }).optional(),
+  customer_phone: z.string().trim().regex(/^[0-9+\-\s()]+$/, { message: "Nomor telepon tidak valid" }).max(20, { message: "Nomor telepon terlalu panjang" }).optional(),
   total_amount: z.number().min(0, { message: "Total tidak boleh negatif" }),
   items: z.array(z.object({
     id: z.string(),
     name: z.string(),
     price: z.number(),
     quantity: z.number().int().min(1),
+    notes: z.string().max(200, { message: "Catatan terlalu panjang" }).optional(),
+    variant: z.string().max(50).optional(),
   })).min(1, { message: "Harus ada minimal 1 item" }),
 });
 

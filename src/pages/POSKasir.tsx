@@ -19,11 +19,14 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  notes?: string;
+  variant?: string;
 }
 
 const POSKasir = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -49,18 +52,31 @@ const POSKasir = () => {
     }
   };
 
-  const addToCart = (product: Product) => {
-    const existing = cart.find(item => item.id === product.id);
+  const addToCart = (product: Product, variant?: string) => {
+    const cartKey = variant ? `${product.id}-${variant}` : product.id;
+    const existing = cart.find(item => {
+      const itemKey = item.variant ? `${item.id}-${item.variant}` : item.id;
+      return itemKey === cartKey;
+    });
+    
     if (existing) {
       if (existing.quantity >= product.stock) {
         toast.error("Stok tidak mencukupi");
         return;
       }
-      setCart(cart.map(item => 
-        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-      ));
+      setCart(cart.map(item => {
+        const itemKey = item.variant ? `${item.id}-${item.variant}` : item.id;
+        return itemKey === cartKey ? { ...item, quantity: item.quantity + 1 } : item;
+      }));
     } else {
-      setCart([...cart, { id: product.id, name: product.name, price: product.price, quantity: 1 }]);
+      const displayName = variant ? `${product.name} (${variant})` : product.name;
+      setCart([...cart, { 
+        id: product.id, 
+        name: displayName, 
+        price: product.price, 
+        quantity: 1,
+        variant 
+      }]);
     }
   };
 
@@ -79,8 +95,12 @@ const POSKasir = () => {
     }).filter(item => item.quantity > 0));
   };
 
-  const removeItem = (id: string) => {
-    setCart(cart.filter(item => item.id !== id));
+  const removeItem = (index: number) => {
+    setCart(cart.filter((_, i) => i !== index));
+  };
+
+  const updateNotes = (index: number, notes: string) => {
+    setCart(cart.map((item, i) => i === index ? { ...item, notes } : item));
   };
 
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -94,6 +114,7 @@ const POSKasir = () => {
     // Validate transaction data
     const transactionData = {
       customer_name: customerName || undefined,
+      customer_phone: customerPhone || undefined,
       total_amount: total,
       items: cart,
     };
@@ -118,6 +139,7 @@ const POSKasir = () => {
         .insert([{
           user_id: user.id,
           customer_name: customerName || null,
+          customer_phone: customerPhone || null,
           total_amount: total,
           items: cart as any,
         }]);
@@ -140,6 +162,7 @@ const POSKasir = () => {
       toast.success(`Transaksi berhasil! Total: Rp ${total.toLocaleString()}`);
       setCart([]);
       setCustomerName("");
+      setCustomerPhone("");
       fetchProducts(); // Refresh product list
     } catch (error: any) {
       toast.error(error.message || "Transaksi gagal");
@@ -171,19 +194,55 @@ const POSKasir = () => {
               <p className="text-center text-muted-foreground py-8">Tidak ada produk tersedia</p>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {products.map((product) => (
-                  <button
-                    key={product.id}
-                    onClick={() => addToCart(product)}
-                    className="p-4 bg-accent hover:bg-accent/80 rounded-lg transition-colors text-left"
-                    disabled={product.stock === 0}
-                  >
-                    <p className="font-semibold text-foreground">{product.name}</p>
-                    <p className="text-sm text-muted-foreground">{product.category}</p>
-                    <p className="text-primary font-bold mt-2">Rp {product.price.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Stok: {product.stock}</p>
-                  </button>
-                ))}
+                {products.map((product) => {
+                  const hasVariants = product.category.toLowerCase().includes('kopi') || 
+                                     product.category.toLowerCase().includes('minuman');
+                  
+                  if (hasVariants) {
+                    return (
+                      <div key={product.id} className="p-4 bg-accent rounded-lg">
+                        <p className="font-semibold text-foreground">{product.name}</p>
+                        <p className="text-sm text-muted-foreground">{product.category}</p>
+                        <p className="text-primary font-bold mt-2">Rp {product.price.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Stok: {product.stock}</p>
+                        <div className="grid grid-cols-2 gap-2 mt-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => addToCart(product, "Hot")}
+                            disabled={product.stock === 0}
+                            className="text-xs"
+                          >
+                            🔥 Hot
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => addToCart(product, "Ice")}
+                            disabled={product.stock === 0}
+                            className="text-xs"
+                          >
+                            ❄️ Ice
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <button
+                      key={product.id}
+                      onClick={() => addToCart(product)}
+                      className="p-4 bg-accent hover:bg-accent/80 rounded-lg transition-colors text-left"
+                      disabled={product.stock === 0}
+                    >
+                      <p className="font-semibold text-foreground">{product.name}</p>
+                      <p className="text-sm text-muted-foreground">{product.category}</p>
+                      <p className="text-primary font-bold mt-2">Rp {product.price.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Stok: {product.stock}</p>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -195,36 +254,52 @@ const POSKasir = () => {
             <h3 className="text-xl font-semibold text-foreground">Keranjang</h3>
           </div>
 
-          <Input
-            placeholder="Nama Pelanggan (Opsional)"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            className="mb-4"
-            maxLength={100}
-          />
+          <div className="space-y-3 mb-4">
+            <Input
+              placeholder="Nama Pelanggan (Opsional)"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              maxLength={100}
+            />
+            <Input
+              placeholder="Nomor Telepon (Opsional)"
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+              maxLength={20}
+            />
+          </div>
 
-          <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
+          <div className="space-y-3 mb-6 max-h-96 overflow-y-auto">
             {cart.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">Keranjang kosong</p>
             ) : (
-              cart.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground">{item.name}</p>
-                    <p className="text-sm text-primary">Rp {item.price.toLocaleString()}</p>
+              cart.map((item, index) => (
+                <div key={index} className="p-3 bg-accent rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">{item.name}</p>
+                      <p className="text-sm text-primary">Rp {item.price.toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="icon" variant="outline" onClick={() => updateQuantity(item.id, -1)}>
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                      <Button size="icon" variant="outline" onClick={() => updateQuantity(item.id, 1)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="destructive" onClick={() => removeItem(index)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button size="icon" variant="outline" onClick={() => updateQuantity(item.id, -1)}>
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                    <Button size="icon" variant="outline" onClick={() => updateQuantity(item.id, 1)}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="destructive" onClick={() => removeItem(item.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Input
+                    placeholder='Catatan (contoh: "tidak pedas", "tanpa bawang")'
+                    value={item.notes || ""}
+                    onChange={(e) => updateNotes(index, e.target.value)}
+                    className="text-sm"
+                    maxLength={200}
+                  />
                 </div>
               ))
             )}

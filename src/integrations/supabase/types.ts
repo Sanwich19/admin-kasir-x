@@ -53,6 +53,41 @@ export type Database = {
         }
         Relationships: []
       }
+      product_variants: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          price_adjustment: number | null
+          product_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          price_adjustment?: number | null
+          product_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          price_adjustment?: number | null
+          product_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string
@@ -135,6 +170,7 @@ export type Database = {
         Row: {
           created_at: string
           customer_name: string | null
+          customer_phone: string | null
           id: string
           items: Json
           total_amount: number
@@ -143,6 +179,7 @@ export type Database = {
         Insert: {
           created_at?: string
           customer_name?: string | null
+          customer_phone?: string | null
           id?: string
           items: Json
           total_amount: number
@@ -151,6 +188,7 @@ export type Database = {
         Update: {
           created_at?: string
           customer_name?: string | null
+          customer_phone?: string | null
           id?: string
           items?: Json
           total_amount?: number
