@@ -195,8 +195,9 @@ const POSKasir = () => {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {products.map((product) => {
-                  const hasVariants = product.category.toLowerCase().includes('kopi') || 
-                                     product.category.toLowerCase().includes('minuman');
+                  const hasVariants = ['Coffee', 'Tea Series', 'Mocktail', 'Milk Based', 'Minuman', 'Kopi'].some(cat => 
+                    product.category === cat || product.category.toLowerCase().includes(cat.toLowerCase())
+                  );
                   
                   if (hasVariants) {
                     return (
