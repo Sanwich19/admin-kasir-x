@@ -195,11 +195,10 @@ const POSKasir = () => {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {products.map((product) => {
-                  const hasVariants = ['Coffee', 'Tea Series', 'Mocktail', 'Milk Based', 'Minuman', 'Kopi'].some(cat => 
-                    product.category === cat || product.category.toLowerCase().includes(cat.toLowerCase())
-                  );
+                  // Only show Ice/Hot variants for drinks (Minuman)
+                  const isMinuman = product.category === 'Minuman';
                   
-                  if (hasVariants) {
+                  if (isMinuman) {
                     return (
                       <div key={product.id} className="p-4 bg-accent rounded-lg">
                         <p className="font-semibold text-foreground">{product.name}</p>
@@ -230,18 +229,25 @@ const POSKasir = () => {
                     );
                   }
                   
+                  // For food (Makanan), show regular add button
                   return (
-                    <button
-                      key={product.id}
-                      onClick={() => addToCart(product)}
-                      className="p-4 bg-accent hover:bg-accent/80 rounded-lg transition-colors text-left"
-                      disabled={product.stock === 0}
-                    >
+                    <div key={product.id} className="p-4 bg-accent rounded-lg">
                       <p className="font-semibold text-foreground">{product.name}</p>
                       <p className="text-sm text-muted-foreground">{product.category}</p>
                       <p className="text-primary font-bold mt-2">Rp {product.price.toLocaleString()}</p>
                       <p className="text-xs text-muted-foreground mt-1">Stok: {product.stock}</p>
-                    </button>
+                      <Button
+                        size="sm"
+                        className="w-full mt-3"
+                        onClick={() => addToCart(product)}
+                        disabled={product.stock === 0}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Tambah
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2 italic">
+                        *Tambahkan catatan di keranjang untuk request khusus (contoh: pedas/tidak pedas)
+                      </p>
+                    </div>
                   );
                 })}
               </div>
