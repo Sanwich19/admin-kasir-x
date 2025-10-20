@@ -174,9 +174,9 @@ const Laporan = () => {
 
       <Tabs value={period} onValueChange={(v) => setPeriod(v as any)} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-3">
-          <TabsTrigger value="day">Per Hari</TabsTrigger>
-          <TabsTrigger value="week">Per Minggu</TabsTrigger>
-          <TabsTrigger value="month">Per Bulan</TabsTrigger>
+          <TabsTrigger value="day">Harian</TabsTrigger>
+          <TabsTrigger value="week">Mingguan</TabsTrigger>
+          <TabsTrigger value="month">Bulanan</TabsTrigger>
         </TabsList>
 
         <TabsContent value={period} className="space-y-6 mt-6">
