@@ -26,7 +26,7 @@ interface CartItem {
 const POSKasir = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [orderNumber, setOrderNumber] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -114,7 +114,7 @@ const POSKasir = () => {
     // Validate transaction data
     const transactionData = {
       customer_name: customerName || undefined,
-      customer_phone: customerPhone || undefined,
+      customer_phone: orderNumber || undefined,
       total_amount: total,
       items: cart,
     };
@@ -139,7 +139,7 @@ const POSKasir = () => {
           cart,
           user_id: user.id,
           customer_name: customerName || null,
-          customer_phone: customerPhone || null,
+          customer_phone: orderNumber || null,
           total_amount: total
         }
       });
@@ -161,7 +161,7 @@ const POSKasir = () => {
       toast.success(`Transaksi berhasil! Total: Rp ${total.toLocaleString()}`);
       setCart([]);
       setCustomerName("");
-      setCustomerPhone("");
+      setOrderNumber("");
       fetchProducts(); // Refresh product list
     } catch (error: any) {
       console.error('Checkout error:', error);
@@ -269,9 +269,9 @@ const POSKasir = () => {
               maxLength={100}
             />
             <Input
-              placeholder="Nomor Telepon (Opsional)"
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
+              placeholder="Nomor Pesanan (Opsional)"
+              value={orderNumber}
+              onChange={(e) => setOrderNumber(e.target.value)}
               maxLength={20}
             />
           </div>
