@@ -15,7 +15,6 @@ const Pengaturan = () => {
     phone: "",
     email: "",
     theme: localStorage.getItem("app-theme") || "blue-white",
-    taxRate: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,7 +41,6 @@ const Pengaturan = () => {
             address: settingsMap.address || "Jl. Raya No. 123, Jakarta",
             phone: settingsMap.phone || "021-12345678",
             email: settingsMap.email || "admin@coffeeshop.com",
-            taxRate: settingsMap.taxRate || "10",
           }));
         }
       } catch (error: any) {
@@ -88,7 +86,6 @@ const Pengaturan = () => {
         { key: 'address', value: settings.address },
         { key: 'phone', value: settings.phone },
         { key: 'email', value: settings.email },
-        { key: 'taxRate', value: settings.taxRate },
       ];
 
       for (const setting of settingsToUpdate) {
@@ -213,20 +210,6 @@ const Pengaturan = () => {
                   </div>
                 </button>
               ))}
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <h3 className="text-xl font-semibold mb-4 text-foreground">Pengaturan Lainnya</h3>
-            <div>
-              <Label htmlFor="taxRate">Pajak (%)</Label>
-              <Input
-                id="taxRate"
-                type="number"
-                value={settings.taxRate}
-                onChange={(e) => setSettings({ ...settings, taxRate: e.target.value })}
-                disabled={!canManageSettings}
-              />
             </div>
           </div>
         </div>

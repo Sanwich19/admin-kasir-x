@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { transactionSchema } from "@/lib/validationSchemas";
+import { Receipt } from "@/components/Receipt";
 
 interface Product {
   id: string;
@@ -30,6 +31,13 @@ const POSKasir = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptData, setReceiptData] = useState<{
+    orderNumber: string;
+    customerName: string;
+    items: CartItem[];
+    total: number;
+  } | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -158,6 +166,15 @@ const POSKasir = () => {
         return;
       }
 
+      // Show receipt
+      setReceiptData({
+        orderNumber: orderNumber || "-",
+        customerName: customerName || "Customer",
+        items: cart,
+        total: total
+      });
+      setShowReceipt(true);
+      
       toast.success(`Transaksi berhasil! Total: Rp ${total.toLocaleString()}`);
       setCart([]);
       setCustomerName("");
@@ -180,11 +197,22 @@ const POSKasir = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-foreground mb-2">POS Kasir</h2>
-        <p className="text-muted-foreground">Sistem point of sale untuk transaksi pelanggan</p>
-      </div>
+    <>
+      {showReceipt && receiptData && (
+        <Receipt
+          orderNumber={receiptData.orderNumber}
+          customerName={receiptData.customerName}
+          items={receiptData.items}
+          total={receiptData.total}
+          onClose={() => setShowReceipt(false)}
+        />
+      )}
+      
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold text-foreground mb-2">POS Kasir</h2>
+          <p className="text-muted-foreground">Sistem point of sale untuk transaksi pelanggan</p>
+        </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
@@ -328,7 +356,8 @@ const POSKasir = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
