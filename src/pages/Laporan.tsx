@@ -3,6 +3,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, startOfWeek, startOfMonth, endOfDay, endOfWeek, endOfMonth, format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from "date-fns";
@@ -13,6 +14,7 @@ const Laporan = () => {
   const [productData, setProductData] = useState<any[]>([]);
   const [totalSales, setTotalSales] = useState(0);
   const [totalTransactions, setTotalTransactions] = useState(0);
+  const [transactionDetails, setTransactionDetails] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,9 +52,23 @@ const Laporan = () => {
         .select('*')
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
-        .order('created_at');
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Format transaction details
+      const details = transactions?.map((transaction, index) => ({
+        no: index + 1,
+        id: transaction.id,
+        created_at: transaction.created_at,
+        customer_name: transaction.customer_name || '-',
+        customer_phone: transaction.customer_phone || '-',
+        cashier_id: transaction.user_id,
+        items: transaction.items,
+        total_amount: transaction.total_amount
+      })) || [];
+
+      setTransactionDetails(details);
 
       // Calculate sales by interval
       const salesByInterval = intervals.map(intervalStart => {
@@ -239,6 +255,55 @@ const Laporan = () => {
                   <Bar dataKey="sales" fill="hsl(var(--primary))" name="Penjualan" />
                 </BarChart>
               </ResponsiveContainer>
+            )}
+          </div>
+
+          <div className="stat-card">
+            <h3 className="text-xl font-semibold mb-4 text-foreground">Detail Transaksi</h3>
+            {transactionDetails.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Belum ada transaksi</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">No</TableHead>
+                      <TableHead>Tanggal/Waktu</TableHead>
+                      <TableHead>Nama Customer</TableHead>
+                      <TableHead>No. Telp</TableHead>
+                      <TableHead>Kasir</TableHead>
+                      <TableHead>Item Pesanan</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transactionDetails.map((transaction) => (
+                      <TableRow key={transaction.id}>
+                        <TableCell className="font-medium">{transaction.no}</TableCell>
+                        <TableCell>
+                          {format(new Date(transaction.created_at), "dd/MM/yyyy HH:mm")}
+                        </TableCell>
+                        <TableCell>{transaction.customer_name}</TableCell>
+                        <TableCell>{transaction.customer_phone}</TableCell>
+                        <TableCell className="text-xs">{transaction.cashier_id.substring(0, 8)}...</TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            {transaction.items.map((item: any, idx: number) => (
+                              <div key={idx} className="text-sm">
+                                {item.quantity}x {item.name}
+                                {item.variant && ` (${item.variant})`}
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          Rp {Number(transaction.total_amount).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </div>
         </TabsContent>
