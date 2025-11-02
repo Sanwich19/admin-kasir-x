@@ -47,10 +47,10 @@ export const Receipt = ({ orderNumber, customerName, items, total, onClose }: Re
               <p className="text-xs">082334557771</p>
             </div>
 
-            {/* Queue Number */}
+            {/* Order Code */}
             {orderNumber && (
               <div className="text-center border-b-2 border-dashed border-gray-300 pb-3">
-                <p className="text-base font-bold">Queue No: {orderNumber}</p>
+                <p className="text-base font-bold">Kode Pesanan: {orderNumber}</p>
               </div>
             )}
 

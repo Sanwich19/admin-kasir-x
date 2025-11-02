@@ -297,7 +297,7 @@ const POSKasir = () => {
               maxLength={100}
             />
             <Input
-              placeholder="Nomor Pesanan (Opsional)"
+              placeholder="Kode Pesanan (Opsional)"
               value={orderNumber}
               onChange={(e) => setOrderNumber(e.target.value)}
               maxLength={20}
